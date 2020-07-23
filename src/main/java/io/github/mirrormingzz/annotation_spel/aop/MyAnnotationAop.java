@@ -1,21 +1,19 @@
 package io.github.mirrormingzz.annotation_spel.aop;
 
 import io.github.mirrormingzz.annotation_spel.annotation.MyAnnotation;
-import io.github.mirrormingzz.annotation_spel.method.SecurityExpressionHandler;
-import io.github.mirrormingzz.annotation_spel.method.SecurityExpressionOperations;
+import io.github.mirrormingzz.annotation_spel.handler.HandlerEntity;
+import io.github.mirrormingzz.annotation_spel.handler.HandlerResult;
+import io.github.mirrormingzz.annotation_spel.handler.SecurityMethodHandlerFactory;
+import io.github.mirrormingzz.annotation_spel.handler.SecurityResultEnum;
+import io.github.mirrormingzz.annotation_spel.handler.parser.SecurityExpressionParser;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 
-import javax.naming.NoPermissionException;
+import javax.naming.AuthenticationException;
 import java.lang.reflect.Method;
 
 /**
@@ -24,16 +22,9 @@ import java.lang.reflect.Method;
 @Service
 @Aspect
 public class MyAnnotationAop {
-    /**
-     * 用于SpEL表达式解析.
-     */
-    private SpelExpressionParser parser = new SpelExpressionParser();
     @Autowired
-    private SecurityExpressionOperations securityExpressionOperations;
-    /**
-     * 用于获取方法参数定义名字.
-     */
-    private DefaultParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
+    SecurityExpressionParser securityExpressionParser;
+
 
     @Around("@annotation(io.github.mirrormingzz.annotation_spel.annotation.MyAnnotation)")
     public Object around(ProceedingJoinPoint p) throws Throwable {
@@ -42,35 +33,28 @@ public class MyAnnotationAop {
         Method method = sign.getMethod();
 
         MyAnnotation preAuthorize = method.getAnnotation(MyAnnotation.class);
-        if (preAuthorize == null) {
-            return p.proceed();
-        }
 
         String value = preAuthorize.value();
-        String s = value.split("\\(")[0];
-        String spelVal = value.split("'")[1];
-
-        String resV = generateKeyBySpEL(spelVal, p);
-        Method m = SecurityExpressionOperations.class.getMethod(s, String.class);
-        boolean res = (boolean) m.invoke(securityExpressionOperations, resV);
+        HandlerEntity parse = securityExpressionParser.parse(p, value);
 
 
-        if (res) {
-            return p.proceed();
+        HandlerResult result = SecurityMethodHandlerFactory.getHandler(parse).handler(parse.getParams());
+        if (result.getResultEnum() == SecurityResultEnum.REJECT) {
+            throw new AuthenticationException("无权限访问");
         }
 
-        throw new NoPermissionException("无权限访问");
-    }
-
-    public String generateKeyBySpEL(String spELString, ProceedingJoinPoint joinPoint) {
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        String[] paramNames = nameDiscoverer.getParameterNames(methodSignature.getMethod());
-        Expression expression = parser.parseExpression(spELString);
-        EvaluationContext context = new StandardEvaluationContext();
-        Object[] args = joinPoint.getArgs();
-        for (int i = 0; i < args.length; i++) {
-            context.setVariable(paramNames[i], args[i]);
+        switch (result.getResultEnum()) {
+            case REJECT:
+                throw new AuthenticationException("无权限访问");
+            case PERMIT:
+                return p.proceed();
+            case PERMIT_AND_PERMISSIONS:
+                Object proceed = p.proceed();
+                Object data = result.getPermissions();
+                //todo 取得权限返回值设置到通用返回中
+                return proceed;
+            default:
+                return p.proceed();
         }
-        return expression.getValue(context).toString();
     }
 }
