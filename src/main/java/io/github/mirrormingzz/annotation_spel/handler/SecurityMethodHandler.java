@@ -9,5 +9,5 @@ import java.util.List;
  */
 @FunctionalInterface
 public interface SecurityMethodHandler {
-    HandlerResult handler(List<String> param);
+    HandlerResult handler(List<Object> param);
 }

@@ -1,6 +1,5 @@
 package io.github.mirrormingzz.annotation_spel.handler;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,14 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SecurityMethodHandlerFactory {
     private static Map<String, SecurityMethodHandler> handlerMap = new ConcurrentHashMap<>();
-    private static EmptyHandler EmptyHandler = new EmptyHandler();
-
-    static class EmptyHandler implements SecurityMethodHandler {
-        @Override
-        public HandlerResult handler(List<String> param) {
-            return HandlerResult.reject();
-        }
-    }
+    private static SecurityMethodHandler EmptyHandler = param -> HandlerResult.reject();
 
     static {
         handlerMap.put("project", new ProjectSecurityMethodHandler());

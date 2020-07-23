@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class TaskSecurityMethodHandler implements SecurityMethodHandler {
     @Override
-    public HandlerResult handler(List<String> param) {
+    public HandlerResult handler(List<Object> param) {
         return null;
     }
 }

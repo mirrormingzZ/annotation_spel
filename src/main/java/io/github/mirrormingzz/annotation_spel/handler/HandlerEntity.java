@@ -13,5 +13,5 @@ import java.util.List;
 @AllArgsConstructor(staticName = "of")
 public class HandlerEntity {
     private String m;
-    private List<String> params;
+    private List<Object> params;
 }

@@ -9,7 +9,7 @@ import java.util.List;
 public class ProjectSecurityMethodHandler implements SecurityMethodHandler {
 
     @Override
-    public HandlerResult handler(List<String> param) {
+    public HandlerResult handler(List<Object> param) {
         return HandlerResult.permit();
     }
 }

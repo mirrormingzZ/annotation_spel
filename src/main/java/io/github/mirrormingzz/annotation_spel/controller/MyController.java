@@ -1,8 +1,6 @@
 package io.github.mirrormingzz.annotation_spel.controller;
 
-import io.github.mirrormingzz.annotation_spel.annotation.Methods;
 import io.github.mirrormingzz.annotation_spel.annotation.MyAnnotation;
-import io.github.mirrormingzz.annotation_spel.annotation.MyAnnotationAuthority;
 import lombok.Data;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,10 +17,10 @@ public class MyController {
         private String name;
     }
 
-    @MyAnnotation("project => #auth.id,#param")
-//    @MyAnnotationAuthority("#auth.name")
+    @MyAnnotation("project1 => #id,#auth,#param")
     @GetMapping("test")
-    public String test(String param, Auth auth) {
+    public String test(Integer id, String param, Auth auth) {
+        System.out.println(id);
         System.out.println(param);
         System.out.println(auth);
         return "233";

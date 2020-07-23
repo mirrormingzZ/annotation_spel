@@ -3,8 +3,10 @@ package io.github.mirrormingzz.annotation_spel.handler.parser;
 import io.github.mirrormingzz.annotation_spel.handler.HandlerEntity;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -14,16 +16,16 @@ import java.util.stream.Collectors;
 @Component
 public class MySecurityExpressionParser implements SecurityExpressionParser {
 
-    public static final String SPLIT_EXPRESS = "=>";
+    private static final String SPLIT_EXPRESS = "=>";
+    private static final String SPLITOR = ",";
 
     @Override
     public HandlerEntity parse(ProceedingJoinPoint p, String value) {
-        if (!value.contains(SPLIT_EXPRESS) || value.split(SPLIT_EXPRESS).length != 2) {
-            throw new RuntimeException("权限表达式错误");
-        }
+        Assert.isTrue(value.contains(SPLIT_EXPRESS), () -> String.format("权限表达式语法错误: %s, 例：project => #id,#auth,#param", value));
+        Assert.isTrue(value.split(SPLIT_EXPRESS).length == 2, () -> String.format("权限表达式语法错误: %s, 例：project => #id,#auth,#param", value));
         String m = value.split(SPLIT_EXPRESS)[0].trim();
         String params = value.split(SPLIT_EXPRESS)[1].trim();
-        String[] split = params.split(",");
-        return HandlerEntity.of(m, Arrays.stream(split).map(s -> parse(s, p)).collect(Collectors.toList()));
+
+        return HandlerEntity.of(m, Arrays.stream(params.split(SPLITOR)).map(s -> parse(s, p)).collect(Collectors.toList()));
     }
 }
