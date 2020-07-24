@@ -25,6 +25,6 @@ public class HandlerResult<T> {
     }
 
     public static HandlerResult permitPermissions(List<String> permissions) {
-        return new HandlerResult(SecurityResultEnum.REJECT, permissions);
+        return new HandlerResult(SecurityResultEnum.PERMIT, permissions);
     }
 }
